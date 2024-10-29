@@ -1,4 +1,4 @@
-# better-everyday-v1
+# better-everyday-v3
 
 Optimizing health for people to boost productivity
 
