@@ -8,7 +8,7 @@ const nextConfig = {
         destination:
           process.env.NODE_ENV === "development"
             ? "http://127.0.0.1:8000/:path*" // Direct to FastAPI locally
-            : "https://your-production-domain.com/api/py/:path*", // Adjust to production API path
+            : "https://better-everyday-v3.vercel.app/api/py/:path*", // Adjust to production API path
       },
       // Rewrites for API documentation in FastAPI
       {
@@ -16,7 +16,7 @@ const nextConfig = {
         destination:
           process.env.NODE_ENV === "development"
             ? "http://127.0.0.1:8000/docs" // Direct to FastAPI docs locally
-            : "https://your-production-domain.com/api/py/docs", // Production API docs
+            : "https://better-everyday-v3.vercel.app/api/py/docs", // Production API docs
       },
       // Rewrites for OpenAPI JSON schema in FastAPI
       {
@@ -24,7 +24,7 @@ const nextConfig = {
         destination:
           process.env.NODE_ENV === "development"
             ? "http://127.0.0.1:8000/openapi.json" // OpenAPI schema locally
-            : "https://your-production-domain.com/api/py/openapi.json", // Production OpenAPI schema
+            : "https://better-everyday-v3.vercel.app/api/py/openapi.json", // Production OpenAPI schema
       },
     ];
   },

@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from api.chat import generate_response  # Adjust if `chat.py` is also in `api` folder
-
+from api.chat import generate_response 
 router = APIRouter()
 
 class ChatRequest(BaseModel):
