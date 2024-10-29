@@ -1,0 +1,74 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# General
+.DS_Store                # macOS system files
+Thumbs.db                # Windows system files
+*.log                    # Log files
+*.pid                    # PID files
+*.gz                     # Gzip archive files
+*.zip                    # Zip archive files
+*.swp                    # Swap files created by text editors
+
+# Node.js (Frontend)
+node_modules
+node_modules/            # Dependency folder for Node.js
+npm-debug.log*           # Debug logs from npm
+yarn-debug.log*          # Debug logs from Yarn
+yarn-error.log*          # Error logs from Yarn
+package-lock.json        # Lock files (optional, depends on the team's workflow)
+.env.local               # Local environment variables for Next.js
+.env.development.local   # Local development environment variables
+.env.test.local          # Local testing environment variables
+.env.production.local    # Local production environment variables
+.env                     # General environment variables file (important: never commit this file)
+
+# Python (Backend)
+env/
+venv/
+.env
+.venv/                   # Python virtual environment folder
+.venv
+__pycache__/             # Python bytecode cache
+*.py[cod]                # Python compiled files
+*.pyo                    # Python optimized files
+env/                     # In case a different virtual environment folder is used
+Pipfile                  # Pipenv dependency management (optional)
+Pipfile.lock             # Pipenv lock file (optional)
+
+# FastAPI (Backend)
+# Avoid uploading sensitive files used for FastAPI configuration or private keys
+instance/                # FastAPI instance folder
+config.py                # Custom configuration file with credentials
+
+# Hugging Face API keys (if stored locally)
+hf_key.txt               # Example: Hugging Face API key stored in a local file
+huggingface_api_keys/    # Any folder containing keys or secrets
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files (can opt-in for commiting if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
