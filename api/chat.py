@@ -1,46 +1,43 @@
 import asyncio
 import os
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEndpoint
+from api.embedding_search import retrieve_similar_texts  # Import for context retrieval
+from api.config import HF_TOKEN  # Ensure config.py has the HF_TOKEN
 
-hf_token = os.getenv("HUGGINGFACE_HUB_TOKEN_WRITE")
-
-# Configure Hugging Face Endpoint with adjusted parameters for health-specific responses
+# Configure the Flan-T5 model as a text-to-text endpoint
 llm = HuggingFaceEndpoint(
-    repo_id="microsoft/Phi-3.5-mini-instruct",
-    task="text-generation",
-    max_new_tokens=80,
+    repo_id="google/flan-t5-base",  # Changed to Flan-T5
+    task="text2text-generation",
+    max_new_tokens=150,
     do_sample=True,
     temperature=0.2,
-    top_p=0.85,
-    repetition_penalty=1.5,
-    huggingfacehub_api_token=hf_token,
+    top_p=0.9,
+    repetition_penalty=1.2,
+    huggingfacehub_api_token=HF_TOKEN,
 )
 
+# Define prompt template for conversational health advice
 prompt = PromptTemplate(
     input_variables=["input"],
     template=(
         "You are Eva, a virtual health assistant providing focused, concise advice. "
-        "Answer user questions with practical health tips only. Do not introduce yourself, "
-        "do not explain your background, and do not mention Phi Beta Kappa or any credentials.\n\n"
+        "Answer user questions with practical health tips only.\n\n"
         "User: {input}\nAssistant:"
     )
 )
-# Initialize LLMChain with the prompt and model
-chat_chain = prompt | llm | StrOutputParser()
 
+# Function to clean the generated response
 def clean_response(response_text):
-    # Ensure response ends on a complete sentence
     if not response_text.endswith((".", "!", "?")):
         last_period = response_text.rfind(".")
         if last_period != -1:
             response_text = response_text[:last_period + 1]  # Trim to last full sentence
-    return response_text
+    return response_text.strip()
 
-async def generate_response(input_text: str, topic: str = "General") -> str:
+async def generate_response_with_context(input_text: str, topic: str = "General") -> str:
     try:
-        # Modify the input based on topic for focused responses
+        # Use the embedding model to retrieve relevant context
         topic_intro = {
             "Eye Health": "Provide health advice on eye health.",
             "Neuro": "Provide brain health tips to improve cognition.",
@@ -51,19 +48,21 @@ async def generate_response(input_text: str, topic: str = "General") -> str:
             "Quick Tips": "Share a quick, motivational health tip."
         }
 
-        # Concatenate topic intro with user input for context
-        adjusted_input = f"{topic_intro.get(topic, 'General wellness advice')}\nUser: {input_text}"
-        
-        # Invoke the model synchronously in an async context
-        raw_response = await asyncio.to_thread(chat_chain.invoke, {"input": adjusted_input})
+        # Retrieve similar advice texts from embedding search based on input query
+        context_texts = retrieve_similar_texts(input_text)
+        context = " ".join(context_texts)  # Combine retrieved texts as context
 
-        # Check if the response is a string or dictionary, handle accordingly
+        # Combine context with prompt for Flan-T5
+        adjusted_input = f"{topic_intro.get(topic, 'General wellness advice')}\nContext: {context}\nUser: {input_text}"
+
+        # Use Flan-T5 for response generation with the added context
+        raw_response = await asyncio.to_thread(llm.invoke, {"input": adjusted_input})
+
+        # Extract and clean up the response text
         response_text = raw_response if isinstance(raw_response, str) else raw_response.get("text", "I'm here to help with health-related advice!")
-        
-        # Clean up and trim overly verbose answers
         response_text = clean_response(response_text)
-        
-        # Further trim the response if it exceeds 50 words (adjustable threshold)
+
+        # Further trim the response if it’s too long
         if len(response_text.split()) > 50:
             response_text = ". ".join(response_text.split(".")[:2]) + "."
 

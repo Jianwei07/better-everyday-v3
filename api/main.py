@@ -2,7 +2,6 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.api import router as chat_router
-import uvicorn
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,8 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the chat router
 app.include_router(chat_router)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="debug")
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

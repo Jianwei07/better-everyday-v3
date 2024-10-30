@@ -1,12 +1,22 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from api.chat import generate_response 
+from api.embedding_search import retrieve_similar_texts
+from api.chat import generate_response_with_context
+
 router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str
+    topic: str = "General"
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
-    response_text = await generate_response(request.message)
+    """Handles user chat requests by first retrieving similar content then generating a response."""
+    # Retrieve context based on user query
+    context_texts = retrieve_similar_texts(request.message)
+    context = " ".join(context_texts)
+    
+    # Generate response with context
+    response_text = await generate_response_with_context(request.message, context)
+    
     return {"response": response_text}
