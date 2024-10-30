@@ -162,7 +162,7 @@ const Chatbot = () => {
             {chat.sender === "Eva" && (
               <div className="flex items-center gap-2 mb-1">
                 <Avatar className="w-6 h-6">
-                  <AvatarImage src="nextjs\src\image\chatbot-avatar-v1.png" />
+                  <AvatarImage src="image\chatbot-avatar-v1.png" />
                   <AvatarFallback className="text-xs">EVA</AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-gray-400">{chat.timestamp}</span>
