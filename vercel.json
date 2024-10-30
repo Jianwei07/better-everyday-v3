@@ -22,9 +22,5 @@
       "src": "/(.*)",
       "dest": "/"
     }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.11",
-    "PIP_DISABLE_PIP_VERSION_CHECK": "1"
-  }
+  ]
 }
