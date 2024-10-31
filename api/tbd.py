@@ -52,9 +52,8 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
         context_texts = retrieve_context_by_category(input_text, topic)  # Use category-specific retrieval
         context = " ".join(context_texts) if context_texts else "No specific advice available for this topic."
 
-        # # Combine context with topic introduction and user input for Flan-T5
-        # adjusted_input = f"{topic_intro.get(topic, 'General wellness advice')}\nContext: {context}\nUser: {input_text}"
-        adjusted_input = f"Topic: {topic}\nContext: {context}\nUser: {input_text}"
+        # Combine context with topic introduction and user input for Flan-T5
+        adjusted_input = f"{topic_intro.get(topic, 'General wellness advice')}\nContext: {context}\nUser: {input_text}"
 
         # Generate response with Flan-T5 using the adjusted input
         raw_response = await asyncio.to_thread(llm.invoke, {"input": adjusted_input})

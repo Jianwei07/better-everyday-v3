@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ type ChatMessage = {
   timestamp?: string;
 };
 
+// Topics and their quick select prompts
 const topics = [
   "Get Quick Tips",
   "Eye Health",
@@ -20,6 +22,37 @@ const topics = [
   "Fat Loss",
   "Random Advice",
 ];
+
+const quickSelectPrompts: { [key: string]: string[] } = {
+  "Get Quick Tips": [
+    "Share a motivational health tip",
+    "What are today's top health tips?",
+  ],
+  "Eye Health": [
+    "How can I prevent eye strain?",
+    "What are good practices for eye health?",
+  ],
+  Neuro: [
+    "How do I improve brain health?",
+    "What are tips for better cognition?",
+  ],
+  "Cancer Prevention": [
+    "How can I reduce cancer risk?",
+    "What lifestyle changes help prevent cancer?",
+  ],
+  "Strength and Weights Training": [
+    "How to build muscle effectively?",
+    "What are good strength exercises?",
+  ],
+  "Fat Loss": [
+    "How can I lose fat safely?",
+    "What is a healthy diet for fat loss?",
+  ],
+  "Random Advice": [
+    "Give me random health advice",
+    "What's a useful wellness tip?",
+  ],
+};
 
 const QuickResponseButton = ({
   text,
@@ -63,10 +96,11 @@ const Chatbot = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
-    setChatHistory([
+    setChatHistory((prev) => [
+      ...prev,
       {
         sender: "Eva",
-        text: `You've selected the topic: ${topic}. How can I assist you with this topic?`,
+        text: `You've selected the topic: ${topic}. Choose a quick question below or ask your own!`,
         timestamp,
       },
     ]);
@@ -74,7 +108,8 @@ const Chatbot = () => {
 
   const handleBackToMenu = () => {
     setSelectedTopic(null);
-    setChatHistory([
+    setChatHistory((prev) => [
+      ...prev,
       {
         sender: "Eva",
         text: "Welcome back! How else can I assist you today?",
@@ -133,12 +168,6 @@ const Chatbot = () => {
     setIsLoading(false);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && !isLoading) {
-      sendMessage();
-    }
-  };
-
   const handleQuickResponse = (quickMessage: string) => {
     setMessage(quickMessage);
     sendMessage(quickMessage);
@@ -161,7 +190,7 @@ const Chatbot = () => {
             {chat.sender === "Eva" && (
               <div className="flex items-center gap-2 mb-1">
                 <Avatar className="w-6 h-6">
-                  <AvatarImage src="nextjs\src\image\chatbot-avatar-v1.png" />
+                  <AvatarImage src="image/chatbot-avatar-v1.png" />
                   <AvatarFallback className="text-xs">EVA</AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-gray-400">{chat.timestamp}</span>
@@ -188,6 +217,10 @@ const Chatbot = () => {
     </div>
   );
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <Card className="max-w-lg mx-auto mt-10 shadow-xl border-0">
       <CardHeader className="border-b bg-white">
@@ -203,7 +236,7 @@ const Chatbot = () => {
             </Button>
           )}
           <Avatar>
-            <AvatarImage src="nextjs\src\image\chatbot-avatar-v1.png" />
+            <AvatarImage src="nextjs/src/image/chatbot-avatar-v1.png" />
             <AvatarFallback className="bg-white text-[#0066ff]">
               EVA
             </AvatarFallback>
@@ -275,14 +308,13 @@ const Chatbot = () => {
             <div className="p-4 border-t bg-white">
               {!isLoading && (
                 <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-                  <QuickResponseButton
-                    text="Tell me more about this topic"
-                    onSend={handleQuickResponse}
-                  />
-                  <QuickResponseButton
-                    text="What are the best practices?"
-                    onSend={handleQuickResponse}
-                  />
+                  {quickSelectPrompts[selectedTopic].map((prompt) => (
+                    <QuickResponseButton
+                      key={prompt}
+                      text={prompt}
+                      onSend={handleQuickResponse}
+                    />
+                  ))}
                 </div>
               )}
 
