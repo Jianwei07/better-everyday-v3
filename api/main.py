@@ -1,9 +1,10 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 from api.api import router as chat_router
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 app = FastAPI()
 
@@ -16,6 +17,8 @@ app.add_middleware(
 )
 
 app.include_router(chat_router)
+
+handler = Mangum(app)
 
 if __name__ == "__main__":
     import uvicorn

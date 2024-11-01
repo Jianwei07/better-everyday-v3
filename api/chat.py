@@ -49,7 +49,7 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
         }
 
         # Retrieve category-specific context based on user input and selected topic
-        context_texts = retrieve_context_by_category(input_text, topic)  # Use category-specific retrieval
+        context_texts = retrieve_context_by_category(query=input_text, category=topic)  # Use category-specific retrieval
         context = " ".join(context_texts) if context_texts else "No specific advice available for this topic."
 
         # # Combine context with topic introduction and user input for Flan-T5

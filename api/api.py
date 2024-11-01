@@ -13,10 +13,10 @@ class ChatRequest(BaseModel):
 async def chat(request: ChatRequest):
     """Handles user chat requests by first retrieving similar content then generating a response."""
     # Retrieve context based on user query
-    context_texts = retrieve_context_by_category(request.message)
+    context_texts = retrieve_context_by_category(request.message, request.topic)
     context = " ".join(context_texts)
     
     # Generate response with context
-    response_text = await generate_response_with_context(request.message, context)
+    response_text = await generate_response_with_context(request.message, request.topic)
     
     return {"response": response_text}

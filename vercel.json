@@ -4,23 +4,13 @@
     {
       "src": "next.config.js",
       "use": "@vercel/next"
-    },
-    {
-      "src": "api/main.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxDuration": 10
-      }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/main.py"
-    },
-    {
-      "src": "/(.*)",
       "dest": "/"
     }
-  ]
+  ],
+  "ignoreCommand": "echo 'Ignoring FastAPI backend for Vercel deployment'"
 }

@@ -50,10 +50,14 @@ def retrieve_context_by_category(query, category, top_k=3):
 
     # Perform a search using 'query_embeddings' and apply category filtering
     results = collection.query(
-        query_embeddings=[query_embedding],  # Use 'query_embeddings' instead of 'embedding'
-        top_k=top_k,
-        where={"category": category}  # Filter by 'category' within 'where' clause
+        query_embeddings=[query_embedding],
+        where={"category": category}
     )
 
-    # Extract the text content from metadata for each result
-    return [result['metadata']['text'] for result in results]
+    # Check if the query returned valid documents
+    if not results.get("documents") or not results["documents"][0]:
+        print("No relevant documents found for the query.")
+        return ["No specific advice available for this topic."]
+
+    # Extract text content from documents, limited to top_k results
+    return [doc for doc in results["documents"][0][:top_k]]
