@@ -7,8 +7,8 @@ from api.config import HF_TOKEN  # Ensure config.py has the HF_TOKEN
 
 # Configure the Flan-T5 model as a text-to-text endpoint
 llm = HuggingFaceEndpoint(
-    repo_id="google/flan-t5-base",  # Changed to Flan-T5
-    task="text2text-generation",
+    repo_id="distilbert/distilgpt2",  # Changed to Flan-T5
+    task="text-generation",
     max_new_tokens=150,
     do_sample=True,
     temperature=0.2,
@@ -27,13 +27,11 @@ prompt = PromptTemplate(
     )
 )
 
-# Function to clean the generated response
 def clean_response(response_text):
-    if not response_text.endswith((".", "!", "?")):
-        last_period = response_text.rfind(".")
-        if last_period != -1:
-            response_text = response_text[:last_period + 1]  # Trim to last full sentence
-    return response_text.strip()
+    response_text = response_text.strip()
+    if len(response_text.split()) > 50:  # Limit to 50 words, customize as needed
+        response_text = ". ".join(response_text.split(".")[:2]) + "."
+    return response_text
 
 async def generate_response_with_context(input_text: str, topic: str = "General") -> str:
     try:
@@ -56,8 +54,7 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
         # adjusted_input = f"{topic_intro.get(topic, 'General wellness advice')}\nContext: {context}\nUser: {input_text}"
         adjusted_input = f"Topic: {topic}\nContext: {context}\nUser: {input_text}"
 
-        # Generate response with Flan-T5 using the adjusted input
-        raw_response = await asyncio.to_thread(llm.invoke, {"input": adjusted_input})
+        raw_response = await asyncio.to_thread(llm.invoke, adjusted_input)
 
         # Extract and clean up the response text
         response_text = raw_response if isinstance(raw_response, str) else raw_response.get("text", "I'm here to help with health-related advice!")

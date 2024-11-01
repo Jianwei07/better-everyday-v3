@@ -34,17 +34,6 @@ def add_data_with_metadata(texts, category):
     print(f"Added {len(texts)} items to the '{category}' category in the vector store.")
 
 def retrieve_context_by_category(query, category, top_k=3):
-    """
-    Retrieve relevant health advice based on a query, filtered by category.
-
-    Args:
-        query (str): User query for advice retrieval.
-        category (str): Category tag to filter retrieval (e.g., "Eye Health").
-        top_k (int): Number of top relevant results to retrieve.
-
-    Returns:
-        List[str]: List of retrieved health advice strings relevant to the query and category.
-    """
     # Encode the query into an embedding
     query_embedding = embedding_model.encode([query])[0]
 
@@ -57,6 +46,7 @@ def retrieve_context_by_category(query, category, top_k=3):
     # Check if the query returned valid documents
     if not results.get("documents") or not results["documents"][0]:
         print("No relevant documents found for the query.")
+        print("Raw query results:", results)
         return ["No specific advice available for this topic."]
 
     # Extract text content from documents, limited to top_k results
