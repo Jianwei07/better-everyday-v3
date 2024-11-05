@@ -37,17 +37,17 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
     try:
         # Topic-specific introductory prompts for context
         topic_prompts = {
-            "Eye Health": "How can I improve eye health?",
-            "Neuro": "How do I improve brain health?",
-            "Cancer Prevention": "How can I reduce cancer risk?",
-            "Strength and Weights Training": "How to build muscle effectively?",
-            "Fat Loss": "How can I lose fat safely?",
-            "Random Advice": "Give me random health advice",
+            "Eye Health": "Please provide specific advice for improving eye health.",
+            "Neuro": "Please provide specific advice for improving brain health.",
+            "Cancer Prevention": "Please provide specific advice on reducing cancer risk.",
+            "Strength and Weights Training": "Please provide specific advice on effective muscle building.",
+            "Fat Loss": "Please provide specific advice on safe fat loss strategies.",
+            "Random Advice": "Please provide random health advice.",
             "Quick Tips": "Share a quick, motivational health tip."
         }
         
         # Retrieve the introductory prompt for the selected topic
-        topic_prompt = topic_prompts.get(topic, "Provide general health advice.")
+        topic_prompt = topic_prompts.get(topic)
 
         # Retrieve category-specific context based on user input and selected topic
         context_texts = retrieve_context_by_category(query=input_text, category=topic)  # Use category-specific retrieval
@@ -58,20 +58,27 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
             context = "No specific advice available for this topic."
 
         # Combine topic prompt, context, and user input for the LLM's adjusted input
-        adjusted_input = f"Topic: {topic_prompt}\nContext:\n{context}\nUser: {input_text}"
+        adjusted_input = (
+            f"{topic_prompt}\n\n"
+            f"Here are some specific health tips related to {topic}:\n"
+            f"{context}\n\n"
+            f"User Query: {input_text}\n\n"
+            "Please respond with advice or suggestions based on the provided context less than 50 words."
+        )
+        print("Adjusted input sent to LLM:", adjusted_input)
 
         # Invoke the language model to generate a response
         raw_response = await asyncio.to_thread(llm.invoke, adjusted_input)
 
         # Extract and clean up the response text
-        response_text = raw_response if isinstance(raw_response, str) else raw_response.get("text", "I'm here to help with health-related advice!")
-        response_text = clean_response(response_text)
+        if not raw_response or not isinstance(raw_response, str):
+            print("Warning: Received empty response from LLM.")
+            response_text = "I'm here to help with health-related advice! Feel free to ask specific questions."
+        else:
+            response_text = clean_response(raw_response)
 
-        # Further trim the response if it’s too long
-        if len(response_text.split()) > 50:
-            response_text = ". ".join(response_text.split(".")[:2]) + "."
-
-        print("Generated response:", response_text)  # For debugging
+        # Print the final response for debugging
+        print("Final response text sent to frontend:", response_text)
         return response_text
     except Exception as e:
         print(f"Error during response generation: {e}")
