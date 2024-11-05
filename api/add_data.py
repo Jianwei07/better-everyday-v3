@@ -1,6 +1,20 @@
-# add_health_data.py
+# add_data.py
+from sentence_transformers import SentenceTransformer
+from api.config import EMBEDDING_MODEL_NAME,collection
 
-from api.embedding_search import add_data_with_metadata
+embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+
+def add_data_with_metadata(texts, category):
+    embeddings = embedding_model.encode(texts)
+    ids = [f"{category}_text_{i}" for i in range(len(texts))]
+    metadatas = [{"category": category, "text": text} for text in texts]
+
+    collection.add(ids=ids, documents=texts, embeddings=embeddings, metadatas=metadatas)
+    print(f"Added {len(texts)} items to the '{category}' category.")
+
+    # Check contents immediately after addition
+    results = collection.get(include=["documents", "metadatas"])
+    print("Data in collection after addition:", results)
 
 # Define health advice data for each topic
 eye_health_advice = [
@@ -45,7 +59,7 @@ quick_tips = [
     "Stand up and stretch if you’ve been sitting for a while."
 ]
 
-# Add data to ChromaDB for each topic
+# Add data to the database for each topic
 if __name__ == "__main__":
     add_data_with_metadata(eye_health_advice, "Eye Health")
     add_data_with_metadata(neuro_health_advice, "Neuro")
@@ -54,5 +68,4 @@ if __name__ == "__main__":
     add_data_with_metadata(fat_loss_advice, "Fat Loss")
     add_data_with_metadata(random_advice, "Random Advice")
     add_data_with_metadata(quick_tips, "Quick Tips")
-
     print("All health data added to the vector database.")

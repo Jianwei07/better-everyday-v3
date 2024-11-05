@@ -36,24 +36,31 @@ def clean_response(response_text):
 async def generate_response_with_context(input_text: str, topic: str = "General") -> str:
     try:
         # Topic-specific introductory prompts for context
-        topic_intro = {
-            "Eye Health": "Provide health advice on eye health.",
-            "Neuro": "Provide brain health tips to improve cognition.",
-            "Cancer Prevention": "Provide advice on cancer prevention.",
-            "Strength and Weights Training": "Give tips for effective strength and weights training.",
-            "Fat Loss": "Provide fat loss advice for health.",
-            "Random Advice": "Give a random health tip.",
+        topic_prompts = {
+            "Eye Health": "How can I improve eye health?",
+            "Neuro": "How do I improve brain health?",
+            "Cancer Prevention": "How can I reduce cancer risk?",
+            "Strength and Weights Training": "How to build muscle effectively?",
+            "Fat Loss": "How can I lose fat safely?",
+            "Random Advice": "Give me random health advice",
             "Quick Tips": "Share a quick, motivational health tip."
         }
+        
+        # Retrieve the introductory prompt for the selected topic
+        topic_prompt = topic_prompts.get(topic, "Provide general health advice.")
 
         # Retrieve category-specific context based on user input and selected topic
         context_texts = retrieve_context_by_category(query=input_text, category=topic)  # Use category-specific retrieval
-        context = " ".join(context_texts) if context_texts else "No specific advice available for this topic."
+        if context_texts and isinstance(context_texts, list):
+            # Format context as a bullet list for clarity
+            context = "\n".join([f"- {text}" for text in context_texts])
+        else:
+            context = "No specific advice available for this topic."
 
-        # # Combine context with topic introduction and user input for Flan-T5
-        # adjusted_input = f"{topic_intro.get(topic, 'General wellness advice')}\nContext: {context}\nUser: {input_text}"
-        adjusted_input = f"Topic: {topic}\nContext: {context}\nUser: {input_text}"
+        # Combine topic prompt, context, and user input for the LLM's adjusted input
+        adjusted_input = f"Topic: {topic_prompt}\nContext:\n{context}\nUser: {input_text}"
 
+        # Invoke the language model to generate a response
         raw_response = await asyncio.to_thread(llm.invoke, adjusted_input)
 
         # Extract and clean up the response text

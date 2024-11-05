@@ -28,7 +28,7 @@ const quickSelectPrompts: { [key: string]: string[] } = {
     "What are today's top health tips?",
   ],
   "Eye Health": [
-    "How can I prevent eye strain?",
+    "How can I improve eye health?",
     "What are good practices for eye health?",
   ],
   Neuro: [
