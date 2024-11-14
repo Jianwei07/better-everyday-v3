@@ -50,10 +50,9 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
         topic_prompt = topic_prompts.get(topic)
 
         # Retrieve category-specific context based on user input and selected topic
-        context_texts = retrieve_context_by_category(query=input_text, category=topic)  # Use category-specific retrieval
+        context_texts = retrieve_context_by_category(query=input_text, category=topic)
         if context_texts and isinstance(context_texts, list):
-            # Format context as a bullet list for clarity
-            context = "\n".join([f"- {text}" for text in context_texts])
+            context = "\n".join(context_texts)  # Removed bullet points for simplicity
         else:
             context = "No specific advice available for this topic."
 
@@ -63,7 +62,7 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
             f"Here are some specific health tips related to {topic}:\n"
             f"{context}\n\n"
             f"User Query: {input_text}\n\n"
-            "Please respond with advice or suggestions based on the provided context less than 50 words."
+            "Please respond with advice or suggestions based on the provided context."
         )
         print("Adjusted input sent to LLM:", adjusted_input)
 
