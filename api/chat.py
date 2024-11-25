@@ -28,9 +28,11 @@ prompt = PromptTemplate(
 )
 
 def clean_response(response_text):
+    print("Response before cleaning:", response_text)
     response_text = response_text.strip()
-    if len(response_text.split()) > 50:  # Limit to 50 words, customize as needed
+    if len(response_text.split()) > 50:
         response_text = ". ".join(response_text.split(".")[:2]) + "."
+    print("Response after cleaning:", response_text)
     return response_text
 
 async def generate_response_with_context(input_text: str, topic: str = "General") -> str:
@@ -45,29 +47,20 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
             "Random Advice": "Please provide random health advice.",
             "Quick Tips": "Share a quick, motivational health tip."
         }
-        
-        # Retrieve the introductory prompt for the selected topic
-        topic_prompt = topic_prompts.get(topic)
-
         # Retrieve category-specific context based on user input and selected topic
         context_texts = retrieve_context_by_category(query=input_text, category=topic)
-        if context_texts and isinstance(context_texts, list):
-            context = "\n".join(context_texts)  # Removed bullet points for simplicity
-        else:
-            context = "No specific advice available for this topic."
+        print("Context texts:", context_texts)
+        context = "\n".join(context_texts) if context_texts else "No context found."
+        print("Formatted context:", context)
 
         # Combine topic prompt, context, and user input for the LLM's adjusted input
-        adjusted_input = (
-            f"{topic_prompt}\n\n"
-            f"Here are some specific health tips related to {topic}:\n"
-            f"{context}\n\n"
-            f"User Query: {input_text}\n\n"
-            "Please respond with advice or suggestions based on the provided context."
-        )
+        adjusted_input = f"User Query: {input_text}\nPlease provide advice."
         print("Adjusted input sent to LLM:", adjusted_input)
 
         # Invoke the language model to generate a response
         raw_response = await asyncio.to_thread(llm.invoke, adjusted_input)
+        print("Raw LLM response:", raw_response)  # Log raw LLM response
+
 
         # Extract and clean up the response text
         if not raw_response or not isinstance(raw_response, str):

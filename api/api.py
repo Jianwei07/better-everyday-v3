@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 from api.embedding_search import retrieve_context_by_category
-from api.chat import generate_response_with_context, test_llm_with_static_input
+from api.chat import generate_response_with_context
 
 router = APIRouter()
 
@@ -51,11 +51,9 @@ async def test_llm_endpoint(request: TestRequest):
             "Please provide a helpful response."
         )
 
-        # Invoke the test function and get the response
-        response_test = await test_llm_with_static_input(static_input)
 
         # Return response in JSON format for consistency
-        return JSONResponse(content={"response": response_test})
+        return JSONResponse(content={"response": context_texts})
 
     except Exception as e:
         # Error handling for backend failures
