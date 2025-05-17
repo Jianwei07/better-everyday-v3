@@ -1,14 +1,15 @@
 import os
 import chromadb
 
-# Configure ChromaDB with persistent storage
-client = chromadb.PersistentClient(path="./chroma_storage")
-
-# Create or retrieve the collection
-collection = client.get_or_create_collection(name="health_advice")
-
-# Hugging Face token (if needed)
+# Hugging Face token (if you need it for private models)
 HF_TOKEN = os.getenv("HUGGINGFACE_HUB_TOKEN_WRITE")
 
-# Embedding Model
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+# Embedding Model: defaults to MiniLM if not set in .env or system env
+EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
+
+# Configure ChromaDB with persistent storage (relative path, change if needed)
+CHROMA_PATH = "./chroma_storage"
+client = chromadb.PersistentClient(path=CHROMA_PATH)
+
+# # For simple projects: create/retrieve the default collection at import time
+# collection = client.get_or_create_collection(name="health_advice")

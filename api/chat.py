@@ -7,6 +7,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import torch
 from api.embedding_search import retrieve_context_by_category
 from api.config import HF_TOKEN 
+import re
 
 model_name = "microsoft/phi-2"  # Only 2.7GB, runs well on CPU
 tokenizer = AutoTokenizer.from_pretrained(model_name)
