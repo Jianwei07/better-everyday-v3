@@ -68,6 +68,18 @@ This chatbot uses a hybrid architecture involving:
    uvicorn main:app --reload
    ```
 
+### To run in Docker:
+
+1. Build:
+   docker build -t eva-rag-backend .
+
+2. Run:
+   docker run -p 8000:8000 \
+   -v $PWD/chroma_storage:/app/chroma_storage \
+   eva-rag-backend
+
+3. Call your API from anywhere!
+
 ### Customization
 
 To train Eva on new topics or specific podcast insights:
