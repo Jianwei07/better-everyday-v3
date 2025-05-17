@@ -51,7 +51,12 @@ LLM_SERVER_URL=http://localhost:8001/v1/completions
 - To run all services:
   ```bash
   docker compose up
+  Check container status	docker-compose ps
+  Check logs	            docker-compose logs fastapi-backend
   ```
+  curl -X POST http://localhost:8000/chat \
+   -H "Content-Type: application/json" \
+   -d '{"message": "How do I improve my brain health?", "topic": "Neuro"}'
 
 ## Notes
 

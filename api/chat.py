@@ -1,8 +1,9 @@
 import asyncio
+import traceback
 from langchain_core.prompts import PromptTemplate
 import httpx
-from api.embedding_search import retrieve_context_by_category
-from api.config import LLM_SERVER_URL
+from embedding_search import retrieve_context_by_category
+from config import LLM_SERVER_URL
 
 # Prompt template (subject-aware)
 RAG_PROMPT_TEMPLATE = """
@@ -41,28 +42,29 @@ async def call_llm_server(prompt: str) -> str:
         response = await client.post(LLM_SERVER_URL, json=payload)
         response.raise_for_status()
         data = response.json()
-        # TGI/vLLM/llama.cpp may return different keys; try common ones
-        if "choices" in data and data["choices"]:
-            return data["choices"][0].get("text") or data["choices"][0].get("generated_text")
-        elif "generated_text" in data:
-            return data["generated_text"]
-        elif "text" in data:
-            return data["text"]
+        print(f"[Eva-RAG DEBUG] LLM raw API response: {data}")  # Debug print
+
+        if isinstance(data, dict):
+            if "content" in data:
+                return data["content"]
+            if "choices" in data and data["choices"]:
+                choice = data["choices"][0]
+                return choice.get("text") or choice.get("generated_text") or choice.get("content")
+            if "generated_text" in data:
+                return data["generated_text"]
+            if "text" in data:
+                return data["text"]
         return str(data)
 
 async def generate_response_with_context(input_text: str, topic: str = "General") -> str:
     try:
-        # Retrieve relevant context (should be fast—optimize your vector search if needed)
         context_texts = retrieve_context_by_category(query=input_text, category=topic)
         if not context_texts:
             return f"I couldn't find any reliable information on {topic} yet, but let me know if you want advice on a different health topic!"
 
         context = "\n".join(context_texts)
-
-        # Build prompt
         prompt = rag_prompt.format(context=context, question=input_text, topic=topic)
 
-        # Generate response (async, with timeout)
         try:
             response = await asyncio.wait_for(
                 call_llm_server(prompt),
@@ -73,6 +75,7 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
             return fallback_response(context_texts, topic)
     except Exception as e:
         print(f"[Eva-RAG ERROR]: {e}")
+        traceback.print_exc()
         return "Sorry, I'm having trouble processing your request. Please try again soon."
 
 def extract_response(response: str) -> str:

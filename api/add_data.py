@@ -2,7 +2,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from api.config import EMBEDDING_MODEL_NAME
+from config import EMBEDDING_MODEL_NAME
 import os
 import shutil
 

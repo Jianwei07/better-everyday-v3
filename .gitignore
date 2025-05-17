@@ -1,6 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # General
+models/
 .DS_Store                # macOS system files
 Thumbs.db                # Windows system files
 *.log                    # Log files

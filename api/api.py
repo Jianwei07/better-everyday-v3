@@ -5,7 +5,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
-from api.chat import generate_response_with_context
+from chat import generate_response_with_context
 
 router = APIRouter()
 
@@ -38,7 +38,7 @@ async def test_llm_endpoint(request: TestRequest):
     """
     Debug endpoint: returns retrieved context from the vector DB (does NOT run LLM).
     """
-    from api.embedding_search import retrieve_context_by_category
+    from embedding_search import retrieve_context_by_category
     try:
         context_texts = retrieve_context_by_category(request.message, request.topic)
         return JSONResponse(content={"context": context_texts})

@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from api.config import EMBEDDING_MODEL_NAME,collection
+from config import EMBEDDING_MODEL_NAME,collection
 
 # Initialize embedding model and vector database client
 embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)

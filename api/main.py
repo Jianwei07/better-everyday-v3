@@ -6,7 +6,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum  # Optional: only for AWS Lambda deployments
-from api.api import router as chat_router
+from api import router as chat_router
 
 logging.basicConfig(level=logging.INFO)
 

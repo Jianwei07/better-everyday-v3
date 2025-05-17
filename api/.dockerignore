@@ -1,0 +1,30 @@
+# Python cache and build files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Env files
+.env
+.env.*
+
+# Virtual environments
+.venv/
+.cache/
+
+# DB, models, and data (mounted as volumes, not copied)
+../models/
+../chroma_storage/
+../data/
+*.db
+*.sqlite3
+
+# IDE/OS junk
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Git & docs
+.git/
+*.md

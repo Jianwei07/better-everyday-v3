@@ -1,10 +1,8 @@
-version: "3.8"
-
 services:
   fastapi-backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./api # <-- point to /api directory
+      dockerfile: Dockerfile # (optional; default if named Dockerfile)
     container_name: eva-fastapi
     env_file:
       - .env.local
@@ -18,24 +16,11 @@ services:
     restart: unless-stopped
 
   llm-server:
-    image: ghcr.io/huggingface/text-generation-inference:latest
-    container_name: eva-llm-server
-    environment:
-      - MODEL_ID=microsoft/phi-2
-      - PORT=8001
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: eva-llama-cpp
+    command: ["-m", "/models/phi-2.Q4_K_M.gguf", "--port", "8001", "-c", "1024"]
+    volumes:
+      - ./models:/models
     ports:
       - "8001:8001"
-    volumes:
-      - ./models:/data/models
     restart: unless-stopped
-    # For llama.cpp or vLLM, replace image and env as needed
-
-  # Optional: ChromaDB as a separate service (if not using in-process)
-  # chromadb:
-  #   image: chromadb/chroma:latest
-  #   container_name: eva-chromadb
-  #   volumes:
-  #     - ./chroma_storage:/chroma_storage
-  #   ports:
-  #     - "8002:8000"
-  #   restart: unless-stopped

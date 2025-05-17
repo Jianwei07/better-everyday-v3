@@ -1,4 +1,4 @@
-from api.config import collection
+from config import collection
 
 def check_all_data():
     # Retrieve all documents to check if data exists
