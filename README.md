@@ -1,105 +1,117 @@
-# better-everyday-v3
+# Eva Health Chatbot: Podcast-Powered RAG for Smarter Health Q&A
 
-Optimizing health for people to boost productivity
+![Docker Compose](https://img.shields.io/badge/docker-compose-blue)
+![LLM-Ready](https://img.shields.io/badge/LLM-ready-brightgreen)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Open Source](https://img.shields.io/badge/open--source-yes-success)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Made with LangChain](https://img.shields.io/badge/langchain-v0.2+-orange)
 
-## Eva Health Chatbot
+> **A personal AI project exploring Retrieval-Augmented Generation (RAG) optimization, health data ingestion, and local LLM deployment—turning podcast transcripts into actionable health advice.**
 
-**Eva Health Chatbot** is a personalized virtual assistant trained to provide health and wellness advice based on curated information. This project aims to enhance personal knowledge retention by training the chatbot with insights gained from YouTube podcasts and other curated sources. By doing so, Eva becomes an interactive repository of health advice that can be accessed conveniently as a reminder or a quick reference tool.
+---
 
-## Project Purpose
+## 🚀 Project Purpose
 
-The primary purpose of this project is to create a customized chatbot that:
+Eva Health Chatbot is a personal, retrieval-augmented assistant that curates and retrieves health and wellness insights from podcast transcripts and curated media. The focus: providing on-demand, category-specific health advice (Neurology, Optometry, Cardiovascular, Fitness, Self-Help, and General Tips).  
+This is a sandbox for **experimenting with RAG optimization, ingestion, and LLM infrastructure—creating a tool that helps reinforce learning from real-world listening.**
 
-- **Trains on Knowledge Sources**: Uses YouTube podcasts, particularly those covering topics in health and wellness, to build a knowledge base from insights gathered during daily commutes.
-- **Retrieves Information**: Provides quick and reliable answers to questions about health topics, serving as a memory aid and reinforcing learning.
-- **Enhances Productivity**: Assists in recalling valuable advice on-demand, making it easy to remember and apply health tips and wellness practices mentioned in podcasts.
+---
 
-## Features
+## 🛠️ Frameworks & Techniques Explored
 
-1. **Embedding Search**: Utilizes embedding search to retrieve relevant health advice based on user queries.
-2. **Conversational Model**: Uses a conversational language model to respond to health-related questions in a natural and engaging way.
-3. **Hybrid Knowledge Retrieval and Generation**: Combines knowledge retrieval with generation capabilities to provide accurate, conversational responses.
-4. **Curated Dataset**: Uses curated datasets, incorporating podcast insights on topics such as eye health, neuro health, cancer prevention, fitness, and more.
-5. **Personalized for Daily Use**: Tailored to offer health tips and reminders based on real-world knowledge consumption.
+- **RAG Optimization**
 
-## Architecture and Setup
+  - **Ingestion Pipelines:** Parsing and chunking podcast transcripts, tuning chunk size and overlap.
+  - **Retrieval Tuning:** Category/topic-based retrieval, top-k and reranking experimentation.
+  - **Rerankers:** Testing cross-encoder rerankers to boost answer relevance.
+  - **Expanding Knowledge:** Modular ingestion for easy addition of new health domains.
 
-This chatbot uses a hybrid architecture involving:
+- **Response Improvements**
 
-1. **Embedding Search**:
-   - Uses a lightweight embedding model to convert text into vectors for similarity search.
-   - Stores these vectors in a vector database (e.g., **Pinecone**, **Chroma**, or **Weaviate**) for fast retrieval of relevant health advice.
-2. **Language Model**:
+  - **Prompt Template Iteration:** Designing prompts for clarity and accuracy.
+  - **Self-Attention Loops:** Prototype answer self-checks and re-asking for improved reliability.
+  - **Prompt-based Output Optimization:** Dynamically re-evaluating answers for actionable, concise advice.
 
-   - A conversational language model (e.g., Flan-T5, GPT, or LLaMA) that has been fine-tuned on health topics to generate responses based on the retrieved content.
+- **Local & Hybrid Computing**
 
-3. **Integration**:
-   - Combining embedding retrieval and language generation allows Eva to respond naturally to health-related queries with accurate, podcast-based information.
+  - **Local LLM Serving:** Running all services locally in Docker Compose for rapid iteration and zero cloud costs.
+  - **Framework Experimentation:** Comparing oLlama, llama.cpp, and Hugging Face APIs for inference and serving.
+  - **Resource Optimization:** Balancing performance and compute for UAT/prod and personal use.
 
-### Technology Stack
+- **Testing Next-Gen RAG**
+  - **CAG (Contrastive Augmented Generation):** Early experiments with contrastive retrieval/answering.
+  - **Multi-Model RAG:** Exploring orchestration of multiple LLMs for robustness.
 
-- **Python**: Primary language for backend and model handling.
-- **FastAPI**: Framework for setting up API endpoints.
-- **LangChain**: Framework for managing language model workflows.
-- **Hugging Face Models**: For both embeddings and conversational generation.
-- **Vector Database**: For fast retrieval of topic-specific health advice.
+---
 
-## Getting Started
+## 🧩 Architecture
 
-### Prerequisites
+- **Backend:** FastAPI (Python) orchestrating all steps with LangChain.
+- **LLM Server:** llama.cpp (Phi-2, Q4 GGUF) or oLlama (easy model swaps).
+- **Vector Store:** ChromaDB (local, persistent, with category metadata).
+- **Frontend:** Next.js (optional, monorepo setup for live chat/dashboard).
+- **DevOps:** Docker Compose for all components and volume-mapped storage.
 
-1. **Python 3.8+**: Required to run the backend.
-2. **API Keys**: Obtain Hugging Face API tokens and any database credentials.
-3. **Dependencies**: Install dependencies using `requirements.txt`.
+---
 
-### Installation
+## ⚡ Features
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/eva-health-chatbot.git
-   cd eva-health-chatbot
-   ```
-2. Install required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Start FastAPI Server:
-   ```bash
-   uvicorn main:app --reload
-   ```
+- **Podcast-Informed Health Q&A:** Ingests and retrieves advice from podcast transcripts and curated wellness content.
+- **Category-Based Retrieval:** Specialized advice for Neurology, Optometry, Cardiovascular, Fitness, Self-Help, and more.
+- **Plug-and-Play Ingestion:** Easily expand knowledge with new transcripts, no retraining required.
+- **Optimized for Local Computing:** Works entirely offline; no cloud dependency for UAT/prod/dev.
+- **RAG Experimentation:** Easy to swap in new retrieval, reranking, or LLM serving approaches.
 
-### To run in Docker:
+---
 
-1. Build:
-   docker build -t eva-rag-backend .
+## 🚦 How to Run
 
-2. Run:
-   docker run -p 8000:8000 \
-   -v $PWD/chroma_storage:/app/chroma_storage \
-   eva-rag-backend
+```sh
+# Build and start everything (from project root)
+docker-compose up --build
 
-3. Call your API from anywhere!
+# Or, for code changes only (with volume-mount):
+docker-compose restart fastapi-backend
+```
 
-### Customization
+## 📚 Ingesting Podcast Data
 
-To train Eva on new topics or specific podcast insights:
+- **Prepare Transcripts:** Convert podcast audio to text (manual or automated), tag by category/topic.
+- **Ingestion Script:** Run the Python pipeline to chunk, embed, and store documents in ChromaDB.
+- **Ready for RAG:** Eva can now answer questions using the enriched knowledge base.
 
-1.  Curate Dataset: Add health-related information from YouTube podcasts or other sources into a structured format (JSON or CSV).
-2.  Embed New Knowledge: Use the embedding model to create and store vectors for the new dataset.
-3.  Fine-Tune (Optional): Fine-tune the conversational model on these topics if needed to improve response relevance.
+---
 
-### Use Cases
+## 🧪 What I’m Experimenting With
 
-1.  Memory Aid for Health Tips: Use Eva to quickly recall advice from podcasts on maintaining good health practices.
-2.  Topic-Specific Retrieval: Retrieve advice on specific topics like neuro health or fat loss based on past listening, creating a personalized knowledge base.
-3.  Daily Check-Ins: Ask Eva for health tips as daily reminders of key wellness practices, reinforcing positive habits.
+- Best chunking and retrieval parameters for accurate health Q&A.
+- Pipeline reranking and answer grading with local models.
+- Comparing LLM serving solutions (llama.cpp vs oLlama vs HuggingFace TGI).
+- Stepback prompting, CAG, and new RAG orchestration strategies.
 
-### Future Goals
+---
 
-1.Enhanced Context Retention: Improve Eva’s ability to retain context over multiple questions.
-Expandable Knowledge Base: Add more health and wellness topics from various reliable sources.
-UI Enhancements: Embed the chatbot into a personal website or Chrome extension for easier access.
+## 🌟 Use Cases
 
-### Contributing
+- **Memory Aid:** Instantly recall actionable advice from podcasts you’ve listened to.
+- **Niche Retrieval:** Targeted search for neurology, vision, cardio, and fitness topics.
+- **Personalized Reminders:** Reinforce key wellness habits as daily check-ins.
+- **Research Playground:** Test new RAG and LLM optimizations on real-world data.
 
-If you'd like to contribute or suggest features, feel free to submit a pull request or open an issue in this repository.
+---
+
+## 🌱 Future Goals
+
+- **Contextual Memory:** Enhance ability to track multi-turn conversations and longer context.
+- **Continuous Knowledge Expansion:** Seamless ingestion of more sources (YouTube, blogs, research).
+- **UI/UX:** Expand chatbot into personal website/extension for always-on access.
+- **Advanced RAG:** Integrate web search fallback, answer grading, and multi-model generation.
+
+---
+
+## 🤝 Open for Collaboration
+
+If you’re passionate about health tech, RAG, or LLM infra, feel free to fork, open an issue, or reach out!
+
+MIT License
