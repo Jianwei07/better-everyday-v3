@@ -5,6 +5,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+from utils import extract_eva_response
 from chat import generate_response_with_context
 
 router = APIRouter()
@@ -15,15 +16,16 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
-    """
-    Handles user chat requests: calls the RAG generator in chat.py and returns the response.
-    """
     try:
         response_text = await generate_response_with_context(request.message, request.topic)
+        eva_output = extract_eva_response(response_text)
         print(f"Request received: message='{request.message}', topic='{request.topic}'")
-        print("Final response text sent to frontend:", response_text)
-        return JSONResponse(content={"response": response_text})
-
+        print("Final cleaned response text sent to frontend:", eva_output["cleaned_text"])
+        return JSONResponse(content={
+            "response": eva_output["cleaned_text"],
+            "blocks": eva_output["answer_blocks"],
+            "raw": eva_output["raw"],  # optional: remove in prod for security/privacy
+        })
     except Exception as e:
         print(f"Error during chat processing: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while processing the chat request.")
@@ -45,3 +47,4 @@ async def test_llm_endpoint(request: TestRequest):
     except Exception as e:
         print(f"Error during LLM test processing: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while testing the LLM.")
+    

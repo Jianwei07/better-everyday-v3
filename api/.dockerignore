@@ -1,21 +1,19 @@
-# Python cache and build files
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.venv/
+.cache/
 
 # Env files
 .env
 .env.*
 
-# Virtual environments
-.venv/
-.cache/
-
-# DB, models, and data (mounted as volumes, not copied)
-../models/
-../chroma_storage/
-../data/
+# Chroma, data, and models inside api/
+chroma_storage/
+data/
+models/
 *.db
 *.sqlite3
 

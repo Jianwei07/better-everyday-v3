@@ -1,19 +1,12 @@
-from config import collection
+import chromadb
+client = chromadb.PersistentClient(path="./chroma_storage")  # Or your path
 
-def check_all_data():
-    # Retrieve all documents to check if data exists
-    results = collection.get(include=["documents", "metadatas"])
-    print("All data in collection:", results)
+for cname in ["langchain", "health_advice"]:
+    col = client.get_collection(name=cname)
+    print(f"[DEBUG] Collection '{cname}' doc count:", col.count())
 
-    if not results.get("documents") or not results["documents"]:
-        print("No data found in the collection.")
-    else:
-        print("Data exists in the collection.")
-        for doc, metadata in zip(results["documents"], results["metadatas"]):
-            print("Document:", doc)
-            print("Metadata:", metadata)
-            print("--------")
-
-if __name__ == "__main__":
-    print("Checking collection name:", collection.name)
-    check_all_data()
+from config import CHROMA_PATH, collection
+import chromadb
+print(f"[DEBUG] Using ChromaDB at: {CHROMA_PATH}")
+client = chromadb.PersistentClient(path=CHROMA_PATH)
+print(f"[DEBUG] Using collection: {collection.name}")

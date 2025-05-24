@@ -69,10 +69,17 @@ This is a sandbox for **experimenting with RAG optimization, ingestion, and LLM 
 
 ```sh
 # Build and start everything (from project root)
+cat requirements_version.txt | sed 's/[=<>!].*//' | grep -v '^#' | grep -v '^\s*$' | sort -u > requirements.txt
 docker-compose up --build
 
 # Or, for code changes only (with volume-mount):
+docker-compose build fastapi-backend
 docker-compose restart fastapi-backend
+
+# To run backend llm services:
+docker-compose up
+docker-compose logs -f
+
 ```
 
 ## 📚 Ingesting Podcast Data
@@ -80,6 +87,8 @@ docker-compose restart fastapi-backend
 - **Prepare Transcripts:** Convert podcast audio to text (manual or automated), tag by category/topic.
 - **Ingestion Script:** Run the Python pipeline to chunk, embed, and store documents in ChromaDB.
 - **Ready for RAG:** Eva can now answer questions using the enriched knowledge base.
+- python api/add_data.py --data_path <FOLDER_PATH> --category <CATEGORY> --chunk_size <CHUNK_SIZE INT> --chunk_overlap <CHUNK INT>
+- example: python api/add_data.py --data_path data/neuro --category neuro --chunk_size 300 --chunk_overlap 100
 
 ---
 
@@ -115,3 +124,7 @@ docker-compose restart fastapi-backend
 If you’re passionate about health tech, RAG, or LLM infra, feel free to fork, open an issue, or reach out!
 
 MIT License
+
+```
+
+```

@@ -1,13 +1,13 @@
 services:
   fastapi-backend:
     build:
-      context: ./api # <-- point to /api directory
-      dockerfile: Dockerfile # (optional; default if named Dockerfile)
+      context: ./api
+      dockerfile: Dockerfile
     container_name: eva-fastapi
     env_file:
       - .env.local
     volumes:
-      - ./chroma_storage:/api/chroma_storage
+      - ./chroma_storage:./chroma_storage
       - ./data:/api/data
     ports:
       - "8000:8000"

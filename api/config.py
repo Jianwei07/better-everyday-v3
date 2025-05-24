@@ -16,4 +16,4 @@ CHROMA_PATH = "./chroma_storage"
 client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 # For simple projects: create/retrieve the default collection at import time
-collection = client.get_or_create_collection(name="health_advice")
+collection = client.get_collection(name="langchain")
