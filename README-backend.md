@@ -48,6 +48,11 @@ LLM_SERVER_URL=http://localhost:8001/v1/completions
 ## Docker Compose
 
 - `docker-compose.yml` orchestrates FastAPI, LLM server, and persistent ChromaDB storage.
+- For changes in programs
+
+  - docker compose build
+  - If You Change Dockerfile or requirements.txt: docker-compose up --build
+
 - To run all services:
   ```bash
   docker compose up
