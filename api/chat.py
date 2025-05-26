@@ -91,6 +91,34 @@ async def self_reflect_on_answer(context: str, answer: str) -> str:
     )
     return await call_llm_server(prompt)
 
+def is_generic_or_empty(text: str) -> bool:
+    """
+    Detects obviously generic or non-contextual LLM outputs.
+    Add your own rules as needed.
+    """
+    if not text or text.strip() == "":
+        return True
+    generic_starts = [
+        "Thank you for your question", "I'm an AI", "As an AI", "I'm sorry",
+        "I do not have enough information", "Based on my knowledge", "Hi there"
+    ]
+    for phrase in generic_starts:
+        if text.strip().lower().startswith(phrase.lower()):
+            return True
+    # LLM sometimes outputs a generic "no info" answer
+    if "I don't know" in text or "not available in the provided context" in text:
+        return True
+    return False
+
+def fallback_response(context_list, topic):
+    bullets = "\n".join([f"- {point}" for point in context_list])
+    return (
+        f"Here are practical recommendations for {topic}:\n"
+        f"{bullets}\n"
+        "Let me know if you need more details!"
+    )
+
+# Main function to generate a response using RAG
 async def generate_response_with_context(input_text: str, topic: str = "General") -> dict:
     """
     Main RAG orchestration:
@@ -131,33 +159,6 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
         print(f"[Eva-RAG ERROR]: {e}")
         traceback.print_exc()
         return extract_eva_response("Sorry, I'm having trouble processing your request. Please try again soon.")
-
-def is_generic_or_empty(text: str) -> bool:
-    """
-    Detects obviously generic or non-contextual LLM outputs.
-    Add your own rules as needed.
-    """
-    if not text or text.strip() == "":
-        return True
-    generic_starts = [
-        "Thank you for your question", "I'm an AI", "As an AI", "I'm sorry",
-        "I do not have enough information", "Based on my knowledge", "Hi there"
-    ]
-    for phrase in generic_starts:
-        if text.strip().lower().startswith(phrase.lower()):
-            return True
-    # LLM sometimes outputs a generic "no info" answer
-    if "I don't know" in text or "not available in the provided context" in text:
-        return True
-    return False
-
-def fallback_response(context_list, topic):
-    bullets = "\n".join([f"- {point}" for point in context_list])
-    return (
-        f"Here are practical recommendations for {topic}:\n"
-        f"{bullets}\n"
-        "Let me know if you need more details!"
-    )
 
 # CLI manual test (optional)
 if __name__ == "__main__":

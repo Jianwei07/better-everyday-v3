@@ -21,6 +21,7 @@ services:
     command: ["-m", "/models/phi-2.Q4_K_M.gguf", "--port", "8001", "-c", "1024"]
     volumes:
       - ./models:/models
+      - ./chroma_storage:/chroma_storage
     ports:
       - "8001:8001"
     restart: unless-stopped

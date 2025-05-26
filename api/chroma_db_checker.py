@@ -43,7 +43,7 @@ def main():
         
     # Assuming you already have `collection`
     result = collection.query(
-        query_texts=["How do I improve brain health?"],
+        query_texts=["Who is Steve?"],
         n_results=5,
         include=["documents", "metadatas"]
     )

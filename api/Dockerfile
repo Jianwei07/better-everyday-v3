@@ -2,10 +2,10 @@
 FROM python:3.10-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    CHROMA_PATH=chroma_storage \
-    EMBEDDING_MODEL_NAME=default-embedding-model
+ENV CHROMA_PATH=/chroma_storage \
+    EMBEDDING_MODEL_NAME=default-embedding-model \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /api
 

@@ -166,7 +166,6 @@ const Chatbot = () => {
     setMessage("");
   };
 
-  // Keep the original sendMessage function completely unchanged
   const sendMessage = async (messageToSend = message) => {
     if (!messageToSend.trim()) return;
     const timestamp = new Date().toLocaleTimeString([], {
@@ -177,32 +176,46 @@ const Chatbot = () => {
     setChatHistory((prev) => [
       ...prev,
       { sender: "User", text: messageToSend, timestamp },
+      { sender: "Eva", text: "Eva is typing...", timestamp: "" }, // typing indicator
     ]);
     setIsLoading(true);
 
     try {
+      const topicPayload = selectedTopic
+        ? selectedTopic.toLowerCase().trim()
+        : "general";
+
       const res = await fetch("http://127.0.0.1:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageToSend, topic: selectedTopic }),
+        body: JSON.stringify({ message: messageToSend, topic: topicPayload }),
       });
       const data = await res.json();
 
-      if (typeof data.response === "string") {
-        setChatHistory((prev) => [
-          ...prev,
+      setChatHistory((prev) => {
+        // Remove the "Eva is typing..." message
+        const newPrev =
+          prev.length > 0 &&
+          prev[prev.length - 1].sender === "Eva" &&
+          prev[prev.length - 1].text === "Eva is typing..."
+            ? prev.slice(0, -1)
+            : prev;
+        return [
+          ...newPrev,
           {
             sender: "Eva",
-            text: data.response,
+            text:
+              typeof data.response === "string"
+                ? data.response
+                : "Sorry, something went wrong.",
             timestamp: new Date().toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             }),
           },
-        ]);
-      }
+        ];
+      });
     } catch (error) {
-      console.error("Error:", error);
       setChatHistory((prev) => [
         ...prev,
         { sender: "Eva", text: "Sorry, something went wrong.", timestamp },

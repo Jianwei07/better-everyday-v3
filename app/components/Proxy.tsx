@@ -132,30 +132,44 @@ const Chatbot = () => {
     setChatHistory((prev) => [
       ...prev,
       { sender: "User", text: messageToSend, timestamp },
+      { sender: "Eva", text: "Eva is typing...", timestamp: "" }, // ADD TYPING INDICATOR
     ]);
     setIsLoading(true);
 
     try {
+      // Always lowercase and trim the topic for backend
+      const topicPayload = selectedTopic
+        ? selectedTopic.toLowerCase().trim()
+        : "general";
+
       const res = await fetch("http://127.0.0.1:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageToSend, topic: selectedTopic }),
+        body: JSON.stringify({ message: messageToSend, topic: topicPayload }),
       });
       const data = await res.json();
 
-      if (typeof data.response === "string") {
-        setChatHistory((prev) => [
-          ...prev,
+      setChatHistory((prev) => {
+        // Remove the last "Eva is typing..." message
+        const last = prev[prev.length - 1];
+        const isEvaTyping =
+          last && last.sender === "Eva" && last.text === "Eva is typing...";
+        const newPrev = isEvaTyping ? prev.slice(0, -1) : prev;
+        return [
+          ...newPrev,
           {
             sender: "Eva",
-            text: data.response,
+            text:
+              typeof data.response === "string"
+                ? data.response
+                : "Sorry, something went wrong.",
             timestamp: new Date().toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             }),
           },
-        ]);
-      }
+        ];
+      });
     } catch (error) {
       console.error("Error:", error);
       setChatHistory((prev) => [
