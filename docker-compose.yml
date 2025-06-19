@@ -6,8 +6,10 @@ services:
     container_name: eva-fastapi
     env_file:
       - .env.local
+    environment: # <-- ADD THIS SECTION
+      - IS_DOCKER=true
     volumes:
-      - ./chroma_storage:./chroma_storage
+      - ./chroma_storage:/chroma_storage # This mapping is correct
       - ./data:/api/data
     ports:
       - "8000:8000"
@@ -18,10 +20,30 @@ services:
   llm-server:
     image: ghcr.io/ggerganov/llama.cpp:server
     container_name: eva-llama-cpp
-    command: ["-m", "/models/phi-2.Q4_K_M.gguf", "--port", "8001", "-c", "1024"]
+    command:
+      [
+        "-m",
+        "/models/phi-2.Q4_K_M.gguf",
+        "--port",
+        "8001",
+        "-c",
+        "2048",
+        "--n_gpu_layers",
+        "30",
+        "--n_predict",
+        "256",
+      ]
     volumes:
       - ./models:/models
-      - ./chroma_storage:/chroma_storage
+      # - ./chroma_storage:/chroma_storage # You can optionally remove this line if llm-server doesn't need it
     ports:
       - "8001:8001"
     restart: unless-stopped
+    # If you have an NVIDIA GPU and NVIDIA Container Toolkit installed, add this section:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]

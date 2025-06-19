@@ -1,4 +1,5 @@
 import asyncio
+import re
 import traceback
 from langchain_core.prompts import PromptTemplate
 import httpx
@@ -8,7 +9,7 @@ from utils import extract_eva_response  # modular output cleaner
 
 RAG_PROMPT_TEMPLATE = """
 You are Eva, an expert health assistant.
-You answer questions based only on the provided CONTEXT, which comes from podcast transcripts or summaries.
+You answer questions based ONLY on the provided CONTEXT. If the context does not contain the answer, state that you cannot find the relevant information. Do not invent or speculate.
 
 CONTEXT:
 {context}
@@ -18,12 +19,14 @@ CONTEXT:
 USER QUESTION: {question}
 
 INSTRUCTIONS:
-- If the user's question asks for host or guest names, search CONTEXT for their mention. If not present, reply: "The host or guest name is not available in the provided context."
-- For all other questions, answer ONLY using CONTEXT.
-- If the answer is not in CONTEXT, reply: "I don't know based on the provided context."
-- Never invent or speculate. Be concise and refer directly to CONTEXT.
+- Focus strictly on answering the USER QUESTION using ONLY the provided CONTEXT.
+- If the user asks for host or guest names, search CONTEXT for their mention. If not present, reply: "The host or guest name is not available in the provided context."
+- For all other questions, answer ONLY using CONTEXT. If the answer is not in CONTEXT, reply: "I don't know based on the provided context."
+- Be concise and refer directly to CONTEXT.
+- Start your response directly with the answer, without any introductory phrases, conversational turns, or follow-up questions.
+- Do NOT repeat the user's question, your instructions, or the context in your answer.
 
-RESPONSE:
+Answer:
 """
 
 rag_prompt = PromptTemplate(
@@ -31,7 +34,7 @@ rag_prompt = PromptTemplate(
     template=RAG_PROMPT_TEMPLATE,
 )
 
-DEFAULT_TIMEOUT = 30.0  # To allow for self-reflection if needed
+DEFAULT_TIMEOUT = 120.0  # Increased for robustness, can be tuned down later
 
 async def call_llm_server(prompt: str) -> str:
     """Call the LLM server with error and timeout handling."""
@@ -42,29 +45,38 @@ async def call_llm_server(prompt: str) -> str:
                 "max_tokens": 200,
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "stop": ["\nRESPONSE:"],
+                "stop": ["\nAnswer:", "\nQUESTION:", "---", "\nINSTRUCTIONS:", "\nCONTEXT:", "RESPONSE:"], # Keep robust stops
             }
             response = await client.post(LLM_SERVER_URL, json=payload)
             response.raise_for_status()
             data = response.json()
             print(f"[Eva-RAG DEBUG] LLM raw API response: {data}")
 
-            # Standard LLM output parsing (robust for different APIs)
+            llm_content = None
             if isinstance(data, dict):
+                # Prioritize 'content' if present (common in OpenAI/llama.cpp server)
                 if "content" in data:
-                    return data["content"]
-                if "choices" in data and data["choices"]:
+                    llm_content = data["content"]
+                elif "choices" in data and data["choices"]:
+                    # Handle 'choices' array (common in older OpenAI or some local APIs)
                     choice = data["choices"][0]
-                    return (
+                    llm_content = (
                         choice.get("text")
                         or choice.get("generated_text")
                         or choice.get("content")
                     )
-                if "generated_text" in data:
-                    return data["generated_text"]
-                if "text" in data:
-                    return data["text"]
-            return str(data)
+                elif "generated_text" in data: # Some APIs use this directly
+                    llm_content = data["generated_text"]
+                elif "text" in data: # Other APIs use this directly
+                    llm_content = data["text"]
+            
+            # CRITICAL FIX: Ensure llm_content is a string, even if it was None or unexpected
+            if not isinstance(llm_content, str):
+                print(f"[Eva-RAG WARNING] LLM content not found in expected keys or not string. Attempting to stringify full response: {type(data)} - {data}")
+                return str(data) # Stringify the entire 'data' object as a fallback
+            
+            return llm_content # Return the extracted string content
+
     except httpx.ReadTimeout:
         print("[Eva-RAG ERROR] LLM server timed out.")
         return "Sorry, the AI model took too long to respond. Please try again!"
@@ -81,33 +93,52 @@ async def self_reflect_on_answer(context: str, answer: str) -> str:
     prompt = (
         "CONTEXT:\n"
         f"{context}\n\n"
-        "ANSWER:\n"
+        "ORIGINAL ANSWER:\n"
         f"{answer}\n\n"
         "INSTRUCTIONS:\n"
-        "Reflect on the above answer. Is it fully supported by the context? "
-        "If not, revise the answer to only use information found in context. "
-        "If nothing relevant is found, say: 'I don't know based on the provided context.'\n\n"
-        "RESPONSE:"
+        "Critique the ORIGINAL ANSWER: Is it fully supported by the CONTEXT? "
+        "If not, revise the ORIGINAL ANSWER to use ONLY information found in CONTEXT. "
+        "If no relevant information is found in CONTEXT, say: 'I don't know based on the provided context.'\n"
+        "Be concise. Do NOT include any introductory phrases like 'Based on the context,' or 'Here's the revised answer.'\n"
+        "Do NOT repeat the instructions or context in your revised answer.\n"
+        "Revised Answer:"
     )
+    # call_llm_server now has global stops, so it will handle stopping at "Revised Answer:" etc.
     return await call_llm_server(prompt)
 
 def is_generic_or_empty(text: str) -> bool:
     """
-    Detects obviously generic or non-contextual LLM outputs.
-    Add your own rules as needed.
+    Detects obviously generic or non-contextual LLM outputs after initial cleaning.
     """
-    if not text or text.strip() == "":
+    cleaned_text = text.strip().lower() # Work with lowercased, stripped text
+    
+    if not cleaned_text:
         return True
+    
+    # Common generic starts
     generic_starts = [
-        "Thank you for your question", "I'm an AI", "As an AI", "I'm sorry",
-        "I do not have enough information", "Based on my knowledge", "Hi there"
+        "thank you for your question", "i'm an ai", "as an ai", "i'm sorry",
+        "i do not have enough information", "based on my knowledge", "hi there"
     ]
     for phrase in generic_starts:
-        if text.strip().lower().startswith(phrase.lower()):
+        if cleaned_text.startswith(phrase.lower()):
             return True
+            
     # LLM sometimes outputs a generic "no info" answer
-    if "I don't know" in text or "not available in the provided context" in text:
+    if "i don't know" in cleaned_text or "not available in the provided context" in cleaned_text:
         return True
+        
+    # If the LLM generates only empty markdown headers or other specific non-answer patterns
+    # after extract_eva_response has run
+    if re.fullmatch(r"^(#+\s*.*?\n*)*\s*$", cleaned_text, re.DOTALL | re.IGNORECASE):
+        return True
+
+    # If the LLM just echoes parts of the prompt despite instructions (more aggressive check)
+    # Check for short responses that are clearly just prompt echoes
+    if len(cleaned_text.split()) < 10: # If very short
+        if "user question:" in cleaned_text or "context:" in cleaned_text or "instructions:" in cleaned_text or "answer:" in cleaned_text or "response:" in cleaned_text:
+            return True
+
     return False
 
 def fallback_response(context_list, topic):
