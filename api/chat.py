@@ -34,7 +34,7 @@ rag_prompt = PromptTemplate(
     template=RAG_PROMPT_TEMPLATE,
 )
 
-DEFAULT_TIMEOUT = 120.0  # Increased for robustness, can be tuned down later
+DEFAULT_TIMEOUT = 120.0
 
 async def call_llm_server(prompt: str) -> str:
     """Call the LLM server with error and timeout handling."""
@@ -42,10 +42,10 @@ async def call_llm_server(prompt: str) -> str:
         async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
             payload = {
                 "prompt": prompt,
-                "max_tokens": 200,
+                "max_tokens": 150, # Example: Reduce to encourage conciseness
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "stop": ["\nAnswer:", "\nQUESTION:", "---", "\nINSTRUCTIONS:", "\nCONTEXT:", "RESPONSE:"], # Keep robust stops
+                "stop": ["\nAnswer:", "\nQUESTION:", "---", "\nINSTRUCTIONS:", "\nCONTEXT:", "RESPONSE:", "\nRevised Answer:"], # Add the new stop for self-reflection
             }
             response = await client.post(LLM_SERVER_URL, json=payload)
             response.raise_for_status()
@@ -54,28 +54,27 @@ async def call_llm_server(prompt: str) -> str:
 
             llm_content = None
             if isinstance(data, dict):
-                # Prioritize 'content' if present (common in OpenAI/llama.cpp server)
                 if "content" in data:
                     llm_content = data["content"]
                 elif "choices" in data and data["choices"]:
-                    # Handle 'choices' array (common in older OpenAI or some local APIs)
                     choice = data["choices"][0]
                     llm_content = (
                         choice.get("text")
                         or choice.get("generated_text")
                         or choice.get("content")
                     )
-                elif "generated_text" in data: # Some APIs use this directly
+                elif "generated_text" in data:
                     llm_content = data["generated_text"]
-                elif "text" in data: # Other APIs use this directly
+                elif "text" in data:
                     llm_content = data["text"]
             
-            # CRITICAL FIX: Ensure llm_content is a string, even if it was None or unexpected
+            # CRITICAL FIX 1: Guarantee the return type is a string
+            # No matter what llm_content or data is, this *must* be a string.
             if not isinstance(llm_content, str):
-                print(f"[Eva-RAG WARNING] LLM content not found in expected keys or not string. Attempting to stringify full response: {type(data)} - {data}")
-                return str(data) # Stringify the entire 'data' object as a fallback
-            
-            return llm_content # Return the extracted string content
+                print(f"[Eva-RAG WARNING] LLM content not found in expected keys or not string. Data type: {type(data)}. Full data: {data}")
+                return str(data) # Force conversion, this is where the error should be caught if it's not a str
+
+            return llm_content
 
     except httpx.ReadTimeout:
         print("[Eva-RAG ERROR] LLM server timed out.")
@@ -91,19 +90,21 @@ async def self_reflect_on_answer(context: str, answer: str) -> str:
     Returns a revised answer if the original wasn't grounded in context.
     """
     prompt = (
-        "CONTEXT:\n"
+        "CONTEXT:\n" # Simpler marker
         f"{context}\n\n"
-        "ORIGINAL ANSWER:\n"
+        "ORIGINAL RESPONSE:\n" # Simpler marker
         f"{answer}\n\n"
         "INSTRUCTIONS:\n"
-        "Critique the ORIGINAL ANSWER: Is it fully supported by the CONTEXT? "
-        "If not, revise the ORIGINAL ANSWER to use ONLY information found in CONTEXT. "
-        "If no relevant information is found in CONTEXT, say: 'I don't know based on the provided context.'\n"
-        "Be concise. Do NOT include any introductory phrases like 'Based on the context,' or 'Here's the revised answer.'\n"
-        "Do NOT repeat the instructions or context in your revised answer.\n"
-        "Revised Answer:"
+        "Analyze the 'ORIGINAL RESPONSE' based ONLY on the 'CONTEXT'.\n"
+        "1. If the 'ORIGINAL RESPONSE' is fully supported by the 'CONTEXT', output the 'ORIGINAL RESPONSE' verbatim.\n"
+        "2. If parts of the 'ORIGINAL RESPONSE' are NOT supported by the 'CONTEXT', revise it to include ONLY information found in the 'CONTEXT'.\n"
+        "3. If nothing in the 'ORIGINAL RESPONSE' is supported by the 'CONTEXT', state: 'I don't know based on the provided context.'\n"
+        "4. Be concise and direct. Do NOT include any introductory phrases, conversational elements, or disclaimers like 'Based on the context,'.\n"
+        "5. Do NOT repeat these INSTRUCTIONS, the CONTEXT, or the ORIGINAL RESPONSE in your output.\n"
+        "6. Provide ONLY the revised answer (or the 'I don't know' statement).\n"
+        "Revised Answer:" # Clear final marker
     )
-    # call_llm_server now has global stops, so it will handle stopping at "Revised Answer:" etc.
+    # The call_llm_server function handles the stop tokens.
     return await call_llm_server(prompt)
 
 def is_generic_or_empty(text: str) -> bool:
@@ -162,7 +163,8 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
         context_texts = retrieve_context_by_category(query=input_text, category=topic)
         if not context_texts or context_texts == ["No specific advice available for this topic."]:
             fallback = "I don't know based on the provided context."
-            return extract_eva_response(fallback)
+            # Ensure string input here too
+            return extract_eva_response(str(fallback)) # Always cast to str here
 
         context = "\n".join(context_texts)
         prompt = rag_prompt.format(context=context, question=input_text, topic=topic)
@@ -173,7 +175,11 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
                 call_llm_server(prompt),
                 timeout=DEFAULT_TIMEOUT,
             )
-            # If the LLM response is obviously generic, trigger stricter self-reflection
+            # CRITICAL FIX 2: Ensure 'response' is a string before passing to is_generic_or_empty or self_reflect_on_answer
+            if not isinstance(response, str):
+                print(f"[Eva-RAG ERROR] Primary LLM call returned non-string type ({type(response)}). Forcing to string for processing.")
+                response = str(response) # Force conversion
+
             if is_generic_or_empty(response):
                 reflected = "I don't know based on the provided context."
             else:
@@ -182,14 +188,23 @@ async def generate_response_with_context(input_text: str, topic: str = "General"
                     self_reflect_on_answer(context, response),
                     timeout=DEFAULT_TIMEOUT,
                 )
+            
+            # CRITICAL FIX 3: Ensure 'reflected' is a string before passing to extract_eva_response
+            if not isinstance(reflected, str):
+                print(f"[Eva-RAG ERROR] Self-reflection LLM call returned non-string type ({type(reflected)}). Forcing to string for final extraction.")
+                reflected = str(reflected)
+
             return extract_eva_response(reflected)
         except asyncio.TimeoutError:
             print("[Eva-RAG ERROR] Overall async timeout.")
-            return extract_eva_response(fallback_response(context_texts, topic))
+            # Ensure string input here too
+            return extract_eva_response(str(fallback_response(context_texts, topic)))
     except Exception as e:
         print(f"[Eva-RAG ERROR]: {e}")
-        traceback.print_exc()
-        return extract_eva_response("Sorry, I'm having trouble processing your request. Please try again soon.")
+        # THIS IS THE MOST IMPORTANT DEBUG STEP NOW: Print full traceback
+        traceback.print_exc() # Ensure this is working to give full traceback for new errors
+        # Ensure string input here too
+        return extract_eva_response(str("Sorry, I'm having trouble processing your request. Please try again soon."))
 
 # CLI manual test (optional)
 if __name__ == "__main__":
