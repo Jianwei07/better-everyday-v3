@@ -8,24 +8,21 @@ from config import LLM_SERVER_URL
 from utils import extract_eva_response  # modular output cleaner
 
 RAG_PROMPT_TEMPLATE = """
-You are Eva, an expert health assistant.
-You answer questions based ONLY on the provided CONTEXT. If the context does not contain the answer, state that you cannot find the relevant information. Do not invent or speculate.
+<s>[INST] You are Eva, a helpful and knowledgeable health assistant.
+Your goal is to answer the user's question based ONLY on the provided context.
 
-CONTEXT:
+Context:
 {context}
 
----
-
-USER QUESTION: {question}
-
-INSTRUCTIONS:
-- Focus strictly on answering the USER QUESTION using ONLY the provided CONTEXT.
-- If the user asks for host or guest names, search CONTEXT for their mention. If not present, reply: "The host or guest name is not available in the provided context."
-- For all other questions, answer ONLY using CONTEXT. If the answer is not in CONTEXT, reply: "I don't know based on the provided context."
-- Be concise and refer directly to CONTEXT.
-- Start your response directly with the answer, without any introductory phrases, conversational turns, or follow-up questions.
-- Do NOT repeat the user's question, your instructions, or the context in your answer.
-
+Instructions:
+- Answer the "User Question" concisely and directly from the "Context".
+- If the answer is not in the Context, state "I don't know based on the provided context."
+- Do NOT make up information.
+- Do NOT include any preambles, conversational filler, or disclaimers.
+- Do NOT repeat the question, context, or these instructions in your answer.
+- Start your answer immediately after the "Answer:" tag.
+[/INST]
+User Question: {question}
 Answer:
 """
 
@@ -86,25 +83,33 @@ async def call_llm_server(prompt: str) -> str:
 
 async def self_reflect_on_answer(context: str, answer: str) -> str:
     """
-    Calls the LLM to reflect on and critique its own answer.
-    Returns a revised answer if the original wasn't grounded in context.
+    Calls the LLM to reflect on and critique its own answer, then revise.
+    This version is designed to be extremely strict.
     """
+    # Self-reflection prompt is often challenging. Let's simplify and make it super direct.
     prompt = (
-        "CONTEXT:\n" # Simpler marker
-        f"{context}\n\n"
-        "ORIGINAL RESPONSE:\n" # Simpler marker
-        f"{answer}\n\n"
-        "INSTRUCTIONS:\n"
-        "Analyze the 'ORIGINAL RESPONSE' based ONLY on the 'CONTEXT'.\n"
-        "1. If the 'ORIGINAL RESPONSE' is fully supported by the 'CONTEXT', output the 'ORIGINAL RESPONSE' verbatim.\n"
-        "2. If parts of the 'ORIGINAL RESPONSE' are NOT supported by the 'CONTEXT', revise it to include ONLY information found in the 'CONTEXT'.\n"
-        "3. If nothing in the 'ORIGINAL RESPONSE' is supported by the 'CONTEXT', state: 'I don't know based on the provided context.'\n"
-        "4. Be concise and direct. Do NOT include any introductory phrases, conversational elements, or disclaimers like 'Based on the context,'.\n"
-        "5. Do NOT repeat these INSTRUCTIONS, the CONTEXT, or the ORIGINAL RESPONSE in your output.\n"
-        "6. Provide ONLY the revised answer (or the 'I don't know' statement).\n"
-        "Revised Answer:" # Clear final marker
+        """<s>[INST] You are an expert editor for an AI assistant. Your task is to review and correct answers.
+        You are given a 'Context' and an 'Original Answer'.
+
+        Context:
+        {context}
+
+        Original Answer:
+        {answer}
+
+        Instructions:
+        - Analyze the 'Original Answer' strictly against the 'Context'.
+        - If the 'Original Answer' is ENTIRELY supported by the 'Context', output the 'Original Answer' verbatim.
+        - If ANY part of the 'Original Answer' is NOT supported by the 'Context', revise it to include ONLY information from 'Context'.
+        - If NO part of the 'Original Answer' is supported by the 'Context', output: 'I don't know based on the provided context.'
+        - Be EXTREMELY concise and direct.
+        - Output ONLY the revised answer. Do NOT include ANY preambles, disclaimers, or conversational filler.
+        - Do NOT repeat the instructions, context, or original answer in your output.
+        - Start your revised answer immediately after the "Revised Answer:" tag.
+        [/INST]
+        Revised Answer:
+    """
     )
-    # The call_llm_server function handles the stop tokens.
     return await call_llm_server(prompt)
 
 def is_generic_or_empty(text: str) -> bool:
