@@ -9,7 +9,9 @@ This backend uses FastAPI, ChromaDB, and a local LLM server (e.g., TGI, llama.cp
 1. **Clone repo and install dependencies:**
 
    ```bash
-   pip install -r requirements.txt
+   uv venv .venv
+   source .venv/Scripts/activate
+   uv pip install -r requirements.txt
    ```
 
 2. **Prepare vector DB:**

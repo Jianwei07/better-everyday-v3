@@ -1,5 +1,5 @@
 # Use official slim Python image for smaller base
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Set environment variables
 ENV CHROMA_PATH=/chroma_storage \
@@ -14,7 +14,7 @@ WORKDIR /api
 
 # Install Python dependencies (cached layer)
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install -r requirements.txt
 
 # Copy only code (after dependencies to maximize cache use)
 COPY . .
