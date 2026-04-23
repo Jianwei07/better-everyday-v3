@@ -80,31 +80,31 @@ Which phases cover which requirements. Filled during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXP-01 | TBD | Pending |
-| ING-01 | TBD | Pending |
-| ING-02 | TBD | Pending |
-| ING-03 | TBD | Pending |
-| ING-04 | TBD | Pending |
-| WRK-01 | TBD | Pending |
-| WRK-02 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| CHAT-03 | TBD | Pending |
-| CHAT-04 | TBD | Pending |
-| KNOW-01 | TBD | Pending |
-| KNOW-02 | TBD | Pending |
-| KNOW-03 | TBD | Pending |
-| MEM-01 | TBD | Pending |
-| MEM-02 | TBD | Pending |
-| MEM-03 | TBD | Pending |
-| AST-01 | TBD | Pending |
-| AST-02 | TBD | Pending |
+| EXP-01 | Phase 1 | Pending |
+| ING-01 | Phase 2 | Pending |
+| ING-02 | Phase 2 | Pending |
+| ING-03 | Phase 2 | Pending |
+| ING-04 | Phase 2 | Pending |
+| WRK-01 | Phase 1 | Pending |
+| WRK-02 | Phase 2 | Pending |
+| CHAT-01 | Phase 3 | Pending |
+| CHAT-02 | Phase 3 | Pending |
+| CHAT-03 | Phase 3 | Pending |
+| CHAT-04 | Phase 3 | Pending |
+| KNOW-01 | Phase 4 | Pending |
+| KNOW-02 | Phase 2 | Pending |
+| KNOW-03 | Phase 4 | Pending |
+| MEM-01 | Phase 6 | Pending |
+| MEM-02 | Phase 6 | Pending |
+| MEM-03 | Phase 6 | Pending |
+| AST-01 | Phase 5 | Pending |
+| AST-02 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠
+- Mapped to phases: 19
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-22*
-*Last updated: 2026-04-22 after initial definition*
+*Last updated: 2026-04-23 after roadmap creation*
